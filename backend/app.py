@@ -422,8 +422,9 @@ async def ask(body: AskIn):
                 return
             mode, sources = await retrieval
             yield ev(type="sources", mode=mode, sources=sources)
-            if not sources:
-                yield ev(type="final", answer="I couldn't find any relevant sources for this question.", verified=False, best=0)
+            if not sources:  # nothing retrieved: decline instead of letting the LLM guess
+                final = {"answer": "I couldn't find any sources about this, so I won't guess.", "verified": False, "refused": True}
+                yield ev(type="final", best=0, **final)
                 return
             context = build_context(sources)
             messages = [{"role": "system", "content": SYSTEM},

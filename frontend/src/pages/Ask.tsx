@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, ChevronDown, FileText, Globe, Loader2, Paperclip, RotateCcw, X } from "lucide-react"
-import { ask, clearDocs, listDocs, listModels, upload, type Model, type Source, type Span, type Verdict } from "@/lib/api"
+import { ArrowUp, FileText, Globe, Loader2, Paperclip, RotateCcw, X } from "lucide-react"
+import { ask, clearDocs, listDocs, listModels, upload, type Source, type Span, type Verdict } from "@/lib/api"
+import { DEFAULT_MODEL, MODELS, ModelPicker } from "@/lib/ModelPicker"
 import { Badge, Highlighted } from "@/lib/ui"
 
 interface Attempt { text: string; verdict?: Verdict }
+
+const MODEL_KEY = "sachai.model.v2"  // v2: earlier saved picks reset once to the new default
 
 const EXAMPLES = ["Who discovered penicillin and when?", "What is the tallest mountain in Africa?", "How does CRISPR gene editing work?"]
 
@@ -16,27 +19,31 @@ export default function Ask() {
   const [sources, setSources] = useState<Source[]>([])
   const [mode, setMode] = useState<"docs" | "web" | "direct">()
   const [attempts, setAttempts] = useState<Attempt[]>([])
-  const [final, setFinal] = useState<{ verified: boolean; best: number; refused?: boolean; direct?: boolean }>()
+  const [final, setFinal] = useState<{ answer: string; verified: boolean; best: number; refused?: boolean; direct?: boolean }>()
   const [error, setError] = useState("")
-  const [models, setModels] = useState<Model[]>([])
+  const [available, setAvailable] = useState<string[]>()
   const [audit, setAudit] = useState<{ hallucinated?: boolean; spans?: Span[]; unavailable?: boolean } | "pending">()
-  const [model, setModel] = useState("")
+  const [model, setModel] = useState(() => {  // synchronous: the picker shows instantly, no API wait
+    let saved = ""
+    try { saved = localStorage.getItem(MODEL_KEY) ?? "" } catch { /* storage unavailable */ }
+    return MODELS.some((m) => m.id === saved) ? saved : DEFAULT_MODEL
+  })
   const fileRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController>(null)
 
   useEffect(() => {
     listDocs().then((r) => setDocs(r.docs)).catch(() => {})
+    // the backend says which providers are configured; hide the rest
     listModels().then((r) => {
-      setModels(r.models)
-      let saved = ""
-      try { saved = localStorage.getItem("sachai.model") ?? "" } catch { /* storage unavailable */ }
-      setModel(r.models.some((m) => m.id === saved) ? saved : r.default ?? "")
+      const ids = r.models.map((m) => m.id)
+      setAvailable(ids)
+      setModel((m) => (ids.includes(m) ? m : r.default ?? m))
     }).catch(() => {})
   }, [])
 
   function pickModel(id: string) {
     setModel(id)
-    try { localStorage.setItem("sachai.model", id) } catch { /* storage unavailable */ }
+    try { localStorage.setItem(MODEL_KEY, id) } catch { /* storage unavailable */ }
   }
 
   async function submit(question = q) {
@@ -93,15 +100,7 @@ export default function Ask() {
             <button type="button" className="btn-ghost h-8 px-2.5" onClick={() => fileRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 size={15} className="animate-spin" /> : <Paperclip size={15} />} <span className="hidden sm:inline">Upload</span>
             </button>
-            {models.length > 0 && (
-              <label className="relative inline-flex items-center">
-                <select value={model} onChange={(e) => pickModel(e.target.value)} aria-label="Answer model"
-                  className="appearance-none bg-transparent text-sm text-muted hover:text-fg hover:bg-line/50 rounded-xl h-8 pl-2.5 pr-7 outline-none cursor-pointer transition">
-                  {models.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-                </select>
-                <ChevronDown size={14} className="absolute right-2 pointer-events-none text-muted" />
-              </label>
-            )}
+            <ModelPicker value={model} onChange={pickModel} available={available} />
             {docs.map((d) => (
               <span key={d} className="inline-flex items-center gap-1 text-xs bg-line/60 rounded-lg px-2 py-1 max-w-[160px]">
                 <FileText size={12} className="shrink-0" /><span className="truncate">{d}</span>
@@ -132,7 +131,7 @@ export default function Ask() {
           {!mode && busy && <Status text="Searching sources…" />}
 
           {/* Final / live answer */}
-          {(best ?? current) && (
+          {(final || current) && (
             <div className="card p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="label">Answer</span>
@@ -142,9 +141,11 @@ export default function Ask() {
                   </Badge>
                 ) : current?.verdict === undefined && current?.text ? <Status text="Writing…" /> : <Status text="Fact-checking…" />}
               </div>
-              {best ? <Highlighted text={best.text} spans={final!.verified ? (audit !== "pending" && audit?.spans) || [] : best.verdict?.spans} /> : <Highlighted text={current!.text} />}
+              {final
+                ? <Highlighted text={final.answer} spans={final.verified ? (audit !== "pending" && audit?.spans) || [] : best?.verdict?.spans} />
+                : <Highlighted text={current!.text} />}
               {final?.direct && <p className="text-xs text-muted">This question needs no outside facts (math, logic or conversation), so it was answered directly without a source check.</p>}
-              {final?.refused && <p className="text-xs text-muted">The retrieved sources don't contain this answer, so SachAI declined rather than guess.</p>}
+              {final?.refused && <p className="text-xs text-muted">{sources.length ? "The retrieved sources don't contain this answer" : "No sources were found for this"}, so SachAI declined rather than guess.</p>}
               {final && !final.verified && !final.direct && !final.refused && <p className="text-xs text-muted">Highlighted parts could not be confirmed by the sources. Hover a highlight for its confidence.</p>}
               {final && audit && (
                 <p className="text-xs text-muted flex items-center gap-1.5">
