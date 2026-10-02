@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sachai-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false
+      - key: HF_SPACE
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPEN_ROUTER_API_KEY
+        sync: false
+      - key: TYPESAFE_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

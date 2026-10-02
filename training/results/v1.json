@@ -1,0 +1,1 @@
+{"threshold": 0.3, "dev_example_f1": 0.8013, "test": {"token_f1": 0.5785, "example_f1": 0.7869, "example_precision": 0.7828, "example_recall": 0.7911}}

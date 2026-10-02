@@ -1,0 +1,1 @@
+{"threshold": 0.15, "data": "ragtruth+halueval", "dev_example_f1": 0.7953, "test": {"token_f1": 0.5483, "example_f1": 0.7432, "example_precision": 0.6789, "example_recall": 0.8208}}

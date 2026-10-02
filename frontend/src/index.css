@@ -1,123 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+:root {
+  --bg: 250 250 249; --surface: 255 255 255; --line: 231 229 228;
+  --fg: 28 25 23; --muted: 120 113 108; --accent: 16 185 129;
+  --ok: 5 150 105; --bad: 225 29 72;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 222 47% 6%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 222 47% 6%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 160 84% 39%;
-    --radius: 0.5rem;
-    
-    --truth: 160 84% 39%;
-    --hallucination: 0 84% 60%;
-    --warning: 38 92% 50%;
-    --info: 217 91% 60%;
-    --risk: 0 72% 51%;
+    --bg: 12 12 11; --surface: 23 23 21; --line: 41 37 36;
+    --fg: 245 245 244; --muted: 168 162 158; --accent: 52 211 153;
+    --ok: 52 211 153; --bad: 251 113 133;
+    color-scheme: dark;
   }
 }
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-  
-  code, pre, .mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
+body { @apply bg-bg text-fg font-sans antialiased; }
+::selection { @apply bg-accent/25; }
+@layer components {
+  .card { @apply bg-surface border border-line rounded-2xl; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-medium transition disabled:opacity-40 disabled:pointer-events-none; }
+  .btn-primary { @apply btn bg-fg text-bg hover:opacity-90; }
+  .btn-ghost { @apply btn text-muted hover:text-fg hover:bg-line/50; }
+  .input { @apply w-full bg-surface border border-line rounded-xl px-4 py-3 text-[15px] outline-none focus:border-fg/30 placeholder:text-muted/70 transition; }
+  .label { @apply text-xs font-medium uppercase tracking-wider text-muted; }
 }
-
-@layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400;
-  }
-  
-  .glass-panel {
-    @apply bg-slate-900/80 backdrop-blur-xl border border-slate-800/50;
-  }
-  
-  .glow-emerald {
-    box-shadow: 0 0 20px -5px hsl(var(--truth) / 0.4);
-  }
-  
-  .glow-rose {
-    box-shadow: 0 0 20px -5px hsl(var(--hallucination) / 0.4);
-  }
-  
-  .scanline {
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      hsl(var(--primary) / 0.03) 50%,
-      transparent 100%
-    );
-    animation: scanline 8s linear infinite;
-  }
-  
-  @keyframes scanline {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100vh); }
-  }
-  
-  .pulse-truth {
-    animation: pulse-truth 2s ease-in-out infinite;
-  }
-  
-  @keyframes pulse-truth {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-  
-  .grid-pattern {
-    background-image: 
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
-  }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(222 47% 8%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(217 33% 25%);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(217 33% 35%);
-}
+@keyframes fade { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+.fade { animation: fade .25s ease-out both; }

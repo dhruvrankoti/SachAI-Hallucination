@@ -1,0 +1,28 @@
+{
+  "test_samples": 400,
+  "dev_samples": 200,
+  "positives_in_test": 132,
+  "jev": {
+    "threshold": 0.2,
+    "f1": 0.7344,
+    "precision": 0.6474,
+    "recall": 0.8485,
+    "latency_p50_s": 0.318,
+    "latency_p90_s": 0.361
+  },
+  "detector": {
+    "f1": 0.7536,
+    "precision": 0.7222,
+    "recall": 0.7879
+  },
+  "jev_or_detector": {
+    "f1": 0.7387,
+    "precision": 0.6119,
+    "recall": 0.9318
+  },
+  "jev_and_detector": {
+    "f1": 0.75,
+    "precision": 0.8017,
+    "recall": 0.7045
+  }
+}
