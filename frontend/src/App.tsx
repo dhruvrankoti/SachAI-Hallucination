@@ -5,30 +5,39 @@ import { warmup } from "@/lib/api"
 const Verify = lazy(() => import("@/pages/Verify"))
 const About = lazy(() => import("@/pages/About"))
 
-const ROUTES = { "": ["Ask", Ask], verify: ["Verify", Verify], about: ["How it works", About] } as const
+const ROUTES = { "/": ["Ask", Ask], "/verify": ["Verify", Verify], "/about": ["How it works", About] } as const
 type Route = keyof typeof ROUTES
-const current = () => (location.hash.slice(2) in ROUTES ? location.hash.slice(2) : "") as Route
+const current = () => (location.pathname in ROUTES ? location.pathname : "/") as Route
 
 export default function App() {
   const [route, setRoute] = useState<Route>(current)
   useEffect(() => {
     warmup() // wake the GPU service while the user types
     const on = () => setRoute(current())
-    addEventListener("hashchange", on)
-    return () => removeEventListener("hashchange", on)
+    addEventListener("popstate", on) // browser back / forward
+    return () => removeEventListener("popstate", on)
   }, [])
   const Page = ROUTES[route][1]
+
+  // client-side navigation: clean URLs without a page reload (modifier-clicks still open new tabs)
+  function go(e: React.MouseEvent<HTMLAnchorElement>, to: Route) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    if (to !== location.pathname) history.pushState(null, "", to)
+    setRoute(to)
+    scrollTo(0, 0)
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur border-b border-line">
         <nav className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <a href="#/" className="flex items-center gap-2 font-semibold tracking-tight">
+          <a href="/" onClick={(e) => go(e, "/")} className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="h-2.5 w-2.5 rounded-full bg-accent" /> SachAI
           </a>
           <div className="flex gap-1 text-sm">
             {(Object.keys(ROUTES) as Route[]).map((r) => (
-              <a key={r} href={`#/${r}`} className={`px-3 py-1.5 rounded-lg transition ${route === r ? "text-fg bg-line/60" : "text-muted hover:text-fg"}`}>{ROUTES[r][0]}</a>
+              <a key={r} href={r} onClick={(e) => go(e, r)} className={`px-3 py-1.5 rounded-lg transition ${route === r ? "text-fg bg-line/60" : "text-muted hover:text-fg"}`}>{ROUTES[r][0]}</a>
             ))}
           </div>
         </nav>
